@@ -25,8 +25,8 @@ from openpilot.common.swaglog import cloudlog
 
 LON_MPC_STEP = 0.2  # first step is 0.2s
 A_CRUISE_MIN = -1.2
-A_CRUISE_MAX_VALS = [1.4, 0.8, 0.4, 0.2]
-A_CRUISE_MAX_BP = [0., 10.0, 25., 40.]
+A_CRUISE_MAX_VALS = [1.4, 0.75, 0.35, 0.15, 0.01]
+A_CRUISE_MAX_BP = [0., 10.0, 25., 40., 63.]
 
 # cgw smooth long tune, dragonpilot
 A_CRUISE_MIN_VALS = [-0.65,  -0.60,  -0.70, -0.70,  -0.65, -0.65]
