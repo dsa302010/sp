@@ -22,7 +22,7 @@ GearShifter = structs.CarState.GearShifter
 
 # The up limit allows the brakes/gas to unwind quickly leaving a stop,
 # the down limit roughly matches the rate of ACCEL_NET, reducing PCM compensation windup
-ACCEL_WINDUP_LIMIT = 2.0 * DT_CTRL * 3  # m/s^2 / frame
+ACCEL_WINDUP_LIMIT = 4.0 * DT_CTRL * 2  # m/s^2 / frame
 ACCEL_WINDDOWN_LIMIT = -4.0 * DT_CTRL * 3  # m/s^2 / frame
 ACCEL_PID_UNWIND = 0.03 * DT_CTRL * 3  # m/s^2 / frame
 
