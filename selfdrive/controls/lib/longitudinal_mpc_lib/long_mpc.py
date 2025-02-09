@@ -91,12 +91,16 @@ def get_stopped_equivalence_factor_krkeegen(v_lead, v_ego):
   mask = delta_speed > 0  # Only apply logic when lead is pulling away
 
   if np.any(mask):
-    # 🔧 **Stronger Low-Speed Acceleration Scaling**
+    # 🔧 **降低低速加速度響應**
     scaling_factor = np.interp(v_ego, [0, 1, 3, 5, 9, 11, 22], [0.7, 0.6, 0.5, 0.5, 0.6, 0.5, 0.3])
-    v_diff_offset[mask] = delta_speed[mask] * scaling_factor
+    
+    # 限制 delta_speed 影響，防止低速時過度加速
+    delta_speed_limited = np.clip(delta_speed, 0, 2.0)  
+
+    v_diff_offset[mask] = delta_speed_limited[mask] * scaling_factor
     v_diff_offset = np.clip(v_diff_offset, 0, v_diff_offset_max)
 
-    # 🔧 **Reduce Ego Speed Scaling Effect at Low Speeds**
+    # 🔧 **減少低速自車速度影響**
     ego_scaling = np.interp(v_ego, [0, 1, 3, 5, 11, 20], [0.8, 0.7, 0.6, 0.5, 0.4, 0.3])
     v_diff_offset *= ego_scaling
 
