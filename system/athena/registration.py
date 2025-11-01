@@ -22,17 +22,8 @@ def is_registered_device() -> bool:
 
 
 def register(show_spinner=False) -> str | None:
-  """
-  All devices built since March 2024 come with all
-  info stored in /persist/. This is kept around
-  only for devices built before then.
-
-  With a backend update to take serial number instead
-  of dongle ID to some endpoints, this can be removed
-  entirely.
-  """
   params = Params()
-  return UNREGISTERED_DONGLE_ID
+
 
   dongle_id: str | None = params.get("DongleId")
   if dongle_id is None and Path(Paths.persist_root()+"/comma/dongle_id").is_file():
@@ -41,10 +32,10 @@ def register(show_spinner=False) -> str | None:
       dongle_id = f.read().strip()
 
   pubkey = Path(Paths.persist_root()+"/comma/id_rsa.pub")
-  if not pubkey.is_file():
-    dongle_id = UNREGISTERED_DONGLE_ID
-    cloudlog.warning(f"missing public key: {pubkey}")
-  elif dongle_id is None:
+  #if not pubkey.is_file():
+    #dongle_id = UNREGISTERED_DONGLE_ID
+    #cloudlog.warning(f"missing public key: {pubkey}")
+  if dongle_id in (None, UNREGISTERED_DONGLE_ID):
     if show_spinner:
       spinner = Spinner()
       spinner.update("registering device")
@@ -57,8 +48,8 @@ def register(show_spinner=False) -> str | None:
     # Block until we get the imei
     serial = HARDWARE.get_serial()
     start_time = time.monotonic()
-    imei1: str | None = None
-    imei2: str | None = None
+    imei1='865420071781912'
+    imei2='865420071781904'
     while imei1 is None and imei2 is None:
       try:
         imei1, imei2 = HARDWARE.get_imei(0), HARDWARE.get_imei(1)
@@ -81,6 +72,11 @@ def register(show_spinner=False) -> str | None:
         if resp.status_code in (402, 403):
           cloudlog.info(f"Unable to register device, got {resp.status_code}")
           dongle_id = UNREGISTERED_DONGLE_ID
+          if show_spinner:
+            while True:
+              spinner.update(f"registering device - serial: {serial}, contact MR.ONE")
+              time.sleep(5)
+          continue 
         else:
           dongleauth = json.loads(resp.text)
           dongle_id = dongleauth["dongle_id"]
@@ -92,7 +88,7 @@ def register(show_spinner=False) -> str | None:
 
       if time.monotonic() - start_time > 60 and show_spinner:
         spinner.update(f"registering device - serial: {serial}, IMEI: ({imei1}, {imei2})")
-        return UNREGISTERED_DONGLE_ID  # hotfix to prevent an infinite wait for registration
+        #return UNREGISTERED_DONGLE_ID  # hotfix to prevent an infinite wait for registration
 
     if show_spinner:
       spinner.close()
