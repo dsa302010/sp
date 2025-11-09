@@ -703,4 +703,3 @@ if __name__ == '__main__':
     for p, alert_list in evs:
       print(f" {repr(p)}:")
       print(" ", ', '.join(alert_list), "\n")
-```
