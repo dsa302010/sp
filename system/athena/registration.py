@@ -3,7 +3,6 @@ import time
 import json
 import jwt
 from pathlib import Path
-
 from datetime import datetime, timedelta, UTC
 from openpilot.common.api import api_get
 from openpilot.common.params import Params
@@ -13,18 +12,14 @@ from openpilot.system.hardware import HARDWARE, PC
 from openpilot.system.hardware.hw import Paths
 from openpilot.common.swaglog import cloudlog
 
-
 UNREGISTERED_DONGLE_ID = "UnregisteredDevice"
 
 def is_registered_device() -> bool:
   dongle = Params().get("DongleId")
   return dongle not in (None, UNREGISTERED_DONGLE_ID)
 
-
 def register(show_spinner=False) -> str | None:
   params = Params()
-
-
   dongle_id: str | None = params.get("DongleId")
   if dongle_id is None and Path(Paths.persist_root()+"/comma/dongle_id").is_file():
     # not all devices will have this; added early in comma 3X production (2/28/24)
@@ -35,6 +30,7 @@ def register(show_spinner=False) -> str | None:
   #if not pubkey.is_file():
     #dongle_id = UNREGISTERED_DONGLE_ID
     #cloudlog.warning(f"missing public key: {pubkey}")
+
   if dongle_id in (None, UNREGISTERED_DONGLE_ID):
     if show_spinner:
       spinner = Spinner()
@@ -56,7 +52,6 @@ def register(show_spinner=False) -> str | None:
       except Exception:
         cloudlog.exception("Error getting imei, trying again...")
         time.sleep(1)
-
       if time.monotonic() - start_time > 60 and show_spinner:
         spinner.update(f"registering device - serial: {serial}, IMEI: ({imei1}, {imei2})")
 
@@ -69,18 +64,21 @@ def register(show_spinner=False) -> str | None:
         resp = api_get("v2/pilotauth/", method='POST', timeout=15,
                        imei=imei1, imei2=imei2, serial=serial, public_key=public_key, register_token=register_token)
 
+        # ========== 【唯一修改处】==========
         if resp.status_code in (402, 403):
-          cloudlog.info(f"Unable to register device, got {resp.status_code}")
+          cloudlog.info(f"Unable to register device, got {resp.status_code}, retrying...")
           dongle_id = UNREGISTERED_DONGLE_ID
           if show_spinner:
-            while True:
-              spinner.update(f"registering device - serial: {serial}, contact MR.ONE")
-              time.sleep(5)
-          continue 
+            spinner.update(f"registering device - serial: {serial}, contact MR.ONE")
+          time.sleep(2)  # 避免请求过快
+          continue  # 继续下一次注册尝试
+        # =====================================
+
         else:
           dongleauth = json.loads(resp.text)
           dongle_id = dongleauth["dongle_id"]
         break
+
       except Exception:
         cloudlog.exception("failed to authenticate")
         backoff = min(backoff + 1, 15)
@@ -88,16 +86,16 @@ def register(show_spinner=False) -> str | None:
 
       if time.monotonic() - start_time > 60 and show_spinner:
         spinner.update(f"registering device - serial: {serial}, IMEI: ({imei1}, {imei2})")
-        #return UNREGISTERED_DONGLE_ID  # hotfix to prevent an infinite wait for registration
+        #return UNREGISTERED_DONGLE_ID # hotfix to prevent an infinite wait for registration
 
     if show_spinner:
       spinner.close()
 
   if dongle_id:
     params.put("DongleId", dongle_id)
-#     set_offroad_alert("Offroad_UnregisteredHardware", (dongle_id == UNREGISTERED_DONGLE_ID) and not PC)
-  return dongle_id
 
+  # set_offroad_alert("Offroad_UnregisteredHardware", (dongle_id == UNREGISTERED_DONGLE_ID) and not PC)
+  return dongle_id
 
 if __name__ == "__main__":
   print(register())
