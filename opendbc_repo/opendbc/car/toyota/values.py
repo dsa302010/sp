@@ -204,7 +204,7 @@ class CAR(Platforms):
       ToyotaCarDocs("Toyota Corolla Cross Hybrid (Non-US only) 2020-22", min_enable_speed=7.5),
       ToyotaCarDocs("Lexus UX Hybrid 2019-24"),
     ],
-    CarSpecs(mass=3060. * CV.LB_TO_KG, wheelbase=2.67, steerRatio=13.9, tireStiffnessFactor=0.444),
+    CarSpecs(mass=2822. * CV.LB_TO_KG, wheelbase=2.67, steerRatio=13.9, tireStiffnessFactor=0.444),
   )
   TOYOTA_HIGHLANDER = PlatformConfig(
     [
